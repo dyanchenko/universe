@@ -33,15 +33,30 @@ class _UniverseMonitor(core.Wrapper):
         self._unvectorized_envs = [wrappers.WeakUnvectorize(self.env, i) for i in range(1)]
 
         # For now we only monitor the first env
-        self._monitor = gym.wrappers.Monitor(self._unvectorized_envs[0],
-            directory=self.directory,
-            video_callable=self.video_callable,
-            force=self.force,
-            resume=self.resume,
-            write_upon_reset=self.write_upon_reset,
-            uid=self.uid,
-            mode=self.mode
-        )
+
+        if hasattr(gym, 'wrappers'):
+            self._monitor = gym.wrappers.Monitor(self._unvectorized_envs[0],
+                directory=self.directory,
+                video_callable=self.video_callable,
+                force=self.force,
+                resume=self.resume,
+                write_upon_reset=self.write_upon_reset,
+                uid=self.uid,
+                mode=self.mode
+            )
+        else:
+            logger.warn("DEPRECATION WARNING: You are using an older version of gym that has a deprecated Monitor, please update to gym:v0.8.0. This change was made 2017/02/01 and is included in universe version 0.21.3")
+            from gym import monitoring
+            self._monitor = monitoring.MonitorManager(self._unvectorized_envs[0])
+            self._monitor.start(
+                self.directory,
+                self.video_callable,
+                self.force,
+                self.resume,
+                self.write_upon_reset,
+                self.uid,
+                self.mode
+            )
 
     def _step(self, action_n):
         self._monitor._before_step(action_n[0])
